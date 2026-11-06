@@ -79,8 +79,9 @@ $('fetchBtn').onclick = async () => {
     const raw = await search(`f:pd (${yearClause(years)} or t:land)`, (n, t) => status(`Searching… ${n} / ${t}`));
     const list = raw.map(slim);
     status('Fetching printings…');
-    const prints = await printings(`f:pd (${yearClause(years)} or t:land)`, (n, t) => status(`Printings… ${n} / ${t}`));
-    list.forEach(c => { c.prints = prints.get(c.oracle_id); });
+    const prints = await printings(`f:pd ${yearClause(years)}`, (n, t) => status(`Printings… ${n} / ${t}`));
+    // Lands from other years have no printing in the picked years; they keep their own printing.
+    list.forEach(c => { c.prints = prints.get(c.oracle_id) || [[c.rarity, c.set, c.artist || '']]; });
     list.forEach(classify);
     S.setCards(list);
     state.fetchedYears = years;
