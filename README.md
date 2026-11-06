@@ -22,12 +22,22 @@ Common searches run instantly on the cards you have. You can use:
 
 - words, and quoted names: `goblin`, `"lightning bolt"`
 - `t:` type, `o:` rules text, `is:dfc` for double-faced cards
-- `c:` colour and `id:` colour identity, with `:`, `=`, `>=`, `<=`, `>`, `<`, for example `c>=ub`, `id<=g`, `c:c` (colorless), `c:m` (multicolor)
+- `c:` colour and `id:` (or `ci:`) colour identity, with `:`, `=`, `>=`, `<=`, `>`, `<`, for example `c>=ub`, `id<=g`, `c:c` (colorless), `c:m` (multicolor)
 - `cmc` (or `mv`), `pow`, `tou` with `=`, `>`, `<`, `>=`, `<=`
 - `r:` rarity (`r>=rare`), `s:` set code, `a:` artist
 - `and`, `or`, `-` for "not", and brackets: `(t:elf or t:goblin) -c:g`
 
-Text in brackets in rules text (reminder text) is not searched. Anything the app does not know, for example `year:` or `f:`, goes to Scryfall and is slower.
+Text in brackets in rules text (reminder text) is not searched.
+
+If a search uses anything below, the whole search goes to [Scryfall](https://scryfall.com/docs/syntax) instead. It still works, but takes a few seconds and only finds cards from the years you fetched:
+
+- **Other keys:** `year:`, `date:`, `f:` / `format:`, `legal:`, `banned:`, `restricted:`, `game:`, `lang:`, `border:`, `frame:`, `layout:`, `number:` / `cn:`, `block:`, `st:`, `new:`, `in:`, `has:`, `not:`
+- **Other `is:` words:** everything except `is:dfc`, for example `is:split`, `is:commander`, `is:reprint`
+- **Mana and stats:** `m:` / `mana:`, `devotion:`, `produces:`, `loy:`, `cmc:even` / `cmc:odd`, and comparing two stats such as `pow>tou`
+- **Text and art:** `ft:` / `flavor:`, `wm:` (watermark), `art:` / `atag:`, `otag:` / `function:`, `kw:` / `keyword:`
+- **Prices and ranks:** `usd`, `eur`, `tix`, `edhrec`, `penny`
+- **Other forms:** exact name `!"Name"`, regular expressions `/.../`, `~` inside `o:`, colour names such as `c:azorius`, and `c>=m` style tests with `m` or `c`
+- **Display options:** `unique:`, `order:`, `direction:`, `prefer:`, `include:`
 
 ## Banned list
 

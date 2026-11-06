@@ -231,7 +231,12 @@ function drawFilters() {
 for (const [k, label] of Object.entries(SORTS)) $('sort').add(new Option(label, k));
 $('sort').onchange = () => { state.sort = $('sort').value; changed(); };
 $('sortDir').onclick = () => { state.sortDesc = !state.sortDesc; $('sortDir').textContent = state.sortDesc ? '↓' : '↑'; changed(); };
-$('helpBtn').onclick = () => { $('helpBody').innerHTML = renderHelp(); $('helpDlg').showModal(); };
+$('helpBtn').onclick = () => { $('helpBody').innerHTML = renderHelp(); $('helpDlg').showModal(); $('helpDlg').scrollTop = 0; };
+// A click outside the window (on the dimmed page) closes it.
+$('helpDlg').onclick = e => {
+  const r = $('helpDlg').getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) $('helpDlg').close();
+};
 
 // ---- Clear selected: confirmed by typing "clear" ----
 $('clearSel').onclick = () => {

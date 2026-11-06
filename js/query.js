@@ -33,11 +33,13 @@ function tokenize(q) {
     let neg = false;
     if (ch === '-') { neg = true; i++; }
     if (q[i] === '(') { toks.push({ t: 'neg' }); continue; }
-    if (q[i] === '!') throw new Unsupported('exact');
+    if (q[i] === '!' || q[i] === '/') throw new Unsupported('exact or regex');
     const km = /^([a-z]+)(>=|<=|!=|:|=|>|<)/i.exec(q.slice(i));
     if (km) {
       i += km[0].length;
-      toks.push({ t: 'term', neg, key: km[1].toLowerCase(), op: km[2], val: readValue().v });
+      const { v, quoted } = readValue();
+      if (!quoted && v.startsWith('/')) throw new Unsupported('regex');
+      toks.push({ t: 'term', neg, key: km[1].toLowerCase(), op: km[2], val: v });
     } else {
       const { v, quoted } = readValue();
       const lc = v.toLowerCase();
@@ -130,7 +132,7 @@ function termFn({ key, op, val, neg }) {
     case 'c': case 'color': case 'colors':
       fn = colorMatch(c => [c.colors, ...faces(c).map(f => f.colors)].filter(Boolean).map(a => a.map(x => x.toLowerCase())), op, val, false);
       break;
-    case 'id': case 'identity':
+    case 'id': case 'identity': case 'ci':
       fn = colorMatch(c => [(c.color_identity || []).map(x => x.toLowerCase())], op, val, true);
       break;
     case 'cmc': case 'mv': { const n = num(); fn = c => cmp(c.cmc, op, n); break; }
