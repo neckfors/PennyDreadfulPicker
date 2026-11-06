@@ -5,7 +5,7 @@ import { search, slim } from './scryfall.js';
 
 // Bump when the catalogue's shape changes and it must be downloaded again. (A change to the printing
 // choice alone only needs repick(), which works from the stored `cands`.)
-export const CATALOG_VERSION = 3;
+export const CATALOG_VERSION = 4;
 // Bump when the printing choice changes: repick() then runs once on the stored catalogue.
 export const PICK_VERSION = 1;
 
@@ -17,6 +17,15 @@ const plain = k => hasImage(k) && k.border === 'black' && !k.full && !k.promo &&
   && !WEIRD_SETS.includes(k.st) && !(k.fx || []).some(e => WEIRD_EFFECTS.includes(e));
 // Lower is better: plain printings first, then the newest (the date is flipped so newer sorts first).
 const rank = k => `${plain(k) ? 0 : hasImage(k) ? 1 : 2} ${99999999 - Number(k.released_at.replace(/-/g, ''))}`;
+
+// Reversible cards (some Secret Lair printings) carry their oracle id on the faces, not on the card.
+const oracleIdOf = c => c.oracle_id || (c.card_faces && c.card_faces[0] && c.card_faces[0].oracle_id);
+// Slim card for the entry; a reversible printing is flattened to its front face.
+function baseOf(raw) {
+  if (raw.layout !== 'reversible_card') return slim(raw);
+  const { card_faces: [f], ...rest } = raw;
+  return slim({ ...rest, ...f, oracle_id: oracleIdOf(raw), layout: 'normal', image_uris: undefined, card_faces: undefined });
+}
 
 const toCand = raw => ({
   id: raw.id, set: raw.set, set_name: raw.set_name, rarity: raw.rarity, released_at: raw.released_at,
@@ -30,7 +39,9 @@ const toCand = raw => ({
 function repickCard(c) {
   const best = c.cands.reduce((a, b) => (rank(b) < rank(a) ? b : a));
   Object.assign(c, { id: best.id, set: best.set, set_name: best.set_name, rarity: best.rarity, released_at: best.released_at, prices: best.prices, artist: best.artist });
-  if (best.image) c.image = best.image; else delete c.image;
+  if (best.image) c.image = best.image;
+  else if (!c.card_faces && best.fimg && best.fimg[0]) c.image = best.fimg[0];
+  else delete c.image;
   if (c.card_faces) c.card_faces.forEach((f, i) => {
     f.image = best.fimg && best.fimg[i];
     if (best.fart && best.fart[i] !== undefined) f.artist = best.fart[i];
@@ -43,7 +54,9 @@ export async function collect(q, onPage) {
   const map = new Map();
   await search(q, onPage, 'prints', batch => {
     for (const raw of batch) {
-      const e = map.get(raw.oracle_id) || map.set(raw.oracle_id, { base: slim(raw), cands: [], prints: [] }).get(raw.oracle_id);
+      const oid = oracleIdOf(raw);
+      const e = map.get(oid) || map.set(oid, { base: baseOf(raw), rev: raw.layout === 'reversible_card', cands: [], prints: [] }).get(oid);
+      if (e.rev && raw.layout !== 'reversible_card') { e.base = baseOf(raw); e.rev = false; }   // prefer a normal printing's data
       const p = [raw.rarity, raw.set, raw.artist || '', Number(raw.released_at.slice(0, 4))];
       if (!e.prints.some(x => x.join() === p.join())) e.prints.push(p);
       e.cands.push(toCand(raw));
@@ -62,7 +75,7 @@ export async function buildCatalog(onStatus) {
 // Adds new cards and new printings since `since` (YYYY-MM-DD), drops cards that are no longer legal.
 export async function updateCatalog(catalog, since, onStatus) {
   const ids = new Set();
-  await search('f:pd', (n, t) => onStatus(`Checking cards… ${n} / ${t}`), 'cards', batch => batch.forEach(c => ids.add(c.oracle_id)));
+  await search('f:pd', (n, t) => onStatus(`Checking cards… ${n} / ${t}`), 'cards', batch => batch.forEach(c => ids.add(oracleIdOf(c))));
   const have = new Set(catalog.map(c => c.oracle_id));
   const out = catalog.filter(c => ids.has(c.oracle_id));
   const removed = catalog.length - out.length;
