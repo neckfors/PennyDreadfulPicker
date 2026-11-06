@@ -2,8 +2,8 @@
 import * as S from './state.js';
 import { state } from './state.js';
 import { classify, BIT } from './mana.js';
-import { search, slim, syncImages, yearClause } from './scryfall.js';
-import { readText, parseList, applyList } from './banned.js';
+import { search, byNames, slim, syncImages, yearClause } from './scryfall.js';
+import { readText, parseList, applyList, bannedSet, isBanned } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
 
 const $ = id => document.getElementById(id);
@@ -91,7 +91,7 @@ $('fetchBtn').onclick = async () => {
 
 async function downloadImages() {
   forgetImages();
-  await syncImages(S.cards, (d, t) => status(`Images ${d} / ${t}`));
+  await syncImages([...S.cards, ...S.bannedCards], (d, t) => status(`Images ${d} / ${t}`));
   draw();
 }
 
@@ -134,6 +134,7 @@ function drawFilters() {
       if (BIT[key]) state.filters.colors ^= BIT[key];
       else state.filters[key] = !state.filters[key];
       paint(); changed();
+      if (key === 'banned' && state.filters.banned) loadBannedCards();
     };
     paint();
     $('colorBtns').append(b);
@@ -150,6 +151,30 @@ $('size').oninput = () => {
   document.documentElement.style.setProperty('--cw', state.size + 'px');
   S.save();
 };
+
+// Looks up banned cards that aren't loaded yet, so "Banned only" works without a fetch.
+async function loadBannedCards() {
+  const loaded = [...S.cards, ...S.bannedCards];
+  const missing = state.banned.filter(n => !loaded.some(c => isBanned(bannedSet([n]), c)));
+  if (!missing.length) return;
+  try {
+    status('Looking up banned cards…');
+    const { found, notFound } = await byNames(missing, (n, t) => status(`Banned cards ${n} / ${t}`));
+    const list = found.map(slim);
+    list.forEach(classify);
+    const lands = list.filter(c => c.isLand);
+    state.banned = state.banned.filter(n => !lands.some(c => isBanned(bannedSet([n]), c)));
+    S.setBannedCards([...S.bannedCards, ...list.filter(c => !c.isLand)]);
+    await S.saveBannedCards();
+    notice([lands.length && `${lands.length} land${lands.length > 1 ? 's' : ''} ignored: ${lands.map(c => c.name).join(', ')}.`,
+      notFound.length && `Not found on Scryfall: ${notFound.join(', ')}.`].filter(Boolean).join(' '));
+    changed();
+    await downloadImages();
+    status('');
+  } catch (e) {
+    status(`Banned lookup failed: ${e.message}`);
+  }
+}
 
 // ---- Selection ----
 grid.onclick = e => {
@@ -188,6 +213,7 @@ $('bannedFile').onchange = async () => {
   notice(`Read ${perFile.join(', ')}. Banned list now ${list.length} cards (${list.length - before} new).` +
     (lands.length ? ` ${lands.length} land${lands.length > 1 ? 's' : ''} ignored: ${lands.join(', ')}.` : ''));
   changed();
+  if (state.filters.banned) loadBannedCards();
 };
 
 // ---- Export / import ----
@@ -199,7 +225,7 @@ $('importFile').onchange = async () => {
   if (!file) return;
   try {
     await S.importFile(file);
-    S.cards.forEach(classify);
+    [...S.cards, ...S.bannedCards].forEach(classify);
     applyStateToUi();
     await downloadImages();
     status('Imported.');
@@ -221,5 +247,6 @@ function applyStateToUi() {
 }
 
 await S.load();
-S.cards.forEach(classify);
+[...S.cards, ...S.bannedCards].forEach(classify);
 applyStateToUi();
+if (state.filters.banned) loadBannedCards();

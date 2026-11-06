@@ -23,6 +23,26 @@ export async function search(q, onPage) {
   return out;
 }
 
+// Looks cards up by exact name, 75 per request. Returns { found, notFound }.
+export async function byNames(names, onPage) {
+  const found = [];
+  const notFound = [];
+  for (let i = 0; i < names.length; i += 75) {
+    if (i) await sleep(100);
+    const res = await fetch('https://api.scryfall.com/cards/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers: names.slice(i, i + 75).map(name => ({ name })) }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.details || `Scryfall error ${res.status}`);
+    found.push(...body.data);
+    notFound.push(...body.not_found.map(x => x.name));
+    onPage && onPage(found.length, names.length);
+  }
+  return { found, notFound };
+}
+
 const pick = (o, ks) => Object.fromEntries(ks.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 const FIELDS = ['id', 'oracle_id', 'name', 'mana_cost', 'cmc', 'colors', 'color_identity', 'type_line', 'rarity',
   'set', 'set_name', 'released_at', 'prices', 'power', 'toughness', 'edhrec_rank', 'penny_rank', 'artist', 'layout'];

@@ -20,13 +20,16 @@ export const state = {
   selOnly: false,
 };
 export let cards = [];
+export let bannedCards = [];  // banned cards looked up by name, for "Banned only" without a fetch
 
 export function setCards(list) { cards = list; }
+export function setBannedCards(list) { bannedCards = list; }
 
 export async function load() {
   const s = await db.get('kv', 'state');
   if (s) Object.assign(state, s);
   cards = (await db.get('kv', 'cards')) || [];
+  bannedCards = (await db.get('kv', 'bannedCards')) || [];
 }
 
 let timer;
@@ -35,9 +38,10 @@ export function save() {
   timer = setTimeout(() => db.put('kv', 'state', { ...state }), 300);
 }
 export const saveCards = () => db.put('kv', 'cards', cards);
+export const saveBannedCards = () => db.put('kv', 'bannedCards', bannedCards);
 
 export function exportFile() {
-  const blob = new Blob([JSON.stringify({ app: 'pd-picker', version: 1, state, cards })], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'pd-picker', version: 1, state, cards, bannedCards })], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `pd-picker-${new Date().toISOString().slice(0, 10)}.json`;
@@ -50,6 +54,8 @@ export async function importFile(file) {
   if (data.app !== 'pd-picker') throw new Error('Not a Penny Dreadful Card Picker file.');
   Object.assign(state, data.state);
   cards = data.cards || [];
+  bannedCards = data.bannedCards || [];
   await db.put('kv', 'state', { ...state });
   await saveCards();
+  await saveBannedCards();
 }

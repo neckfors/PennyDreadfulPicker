@@ -1,6 +1,6 @@
 // Filtering, sorting and drawing the card grid. Never calls Scryfall.
 import * as db from './db.js';
-import { state, cards } from './state.js';
+import { state, cards, bannedCards } from './state.js';
 import { matchFace, COLORS, BIT } from './mana.js';
 import { bannedSet, isBanned } from './banned.js';
 
@@ -47,6 +47,13 @@ function compare(a, b) {
   return r || a.name.localeCompare(b.name);
 }
 
+// Cards to filter: the fetched list, plus banned cards fetched by name while "Banned only" is on.
+function pool() {
+  if (!state.filters.banned) return cards;
+  const have = new Set(cards.map(c => c.oracle_id));
+  return [...cards, ...bannedCards.filter(c => !have.has(c.oracle_id))];
+}
+
 // Returns visible cards as [card, faceIndex] pairs.
 export function visible() {
   const f = state.filters;
@@ -55,7 +62,7 @@ export function visible() {
   const hits = state.searchHits ? new Set(state.searchHits) : null;
   const banned = bannedSet(state.banned);
   const out = [];
-  for (const c of cards) {
+  for (const c of pool()) {
     if (state.selOnly && !sel.has(c.oracle_id)) continue;
     if (hits && !hits.has(c.oracle_id)) continue;
     const ban = isBanned(banned, c);
@@ -123,6 +130,6 @@ export function render(grid, counter) {
     observer.observe(el);
   }
   grid.replaceChildren(frag);
-  if (!cards.length) grid.innerHTML = '<p class="empty">No cards yet. Pick years and press Fetch cards.</p>';
-  counter.textContent = `${list.length} / ${cards.length}`;
+  if (!list.length && !cards.length && !state.filters.banned) grid.innerHTML = '<p class="empty">No cards yet. Pick years and press Fetch cards.</p>';
+  counter.textContent = `${list.length} / ${pool().length}`;
 }
