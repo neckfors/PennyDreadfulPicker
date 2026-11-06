@@ -1,0 +1,27 @@
+name: Deploy to GitHub Pages (password protected)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build encrypted site
+        env:
+          PASSWORD: ${{ secrets.STATICRYPT_PASSWORD }}
+        run: |
+          mkdir -p _site
+          cp -r css js _site/
+          npx --yes staticrypt@3.5.4 index.html -p "$PASSWORD" -d _site --short --remember 30
+      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/deploy-pages@v4

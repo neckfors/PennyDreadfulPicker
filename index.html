@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penny Dreadful Card Picker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mana-font@1.18.0/css/mana.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="top">
+  <div class="row" id="years"></div>
+  <div class="row">
+    <select id="tplSelect" aria-label="Template"><option value="">Templates…</option></select>
+    <button id="tplLoad">Load</button>
+    <button id="tplSave">Save as…</button>
+    <button id="tplDelete">Delete</button>
+    <button id="fetchBtn" class="primary">Fetch cards</button>
+    <span id="status" role="status"></span>
+    <span class="spacer"></span>
+    <button id="bannedAdd">Banned: add file</button>
+    <button id="bannedReplace">Banned: replace</button>
+    <button id="bannedClear">Clear banned</button>
+    <button id="exportBtn">Export</button>
+    <button id="importBtn">Import</button>
+    <input type="file" id="bannedFile" accept=".txt,.dek,.dec,text/plain" hidden>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
+  <div id="notice" role="status" hidden></div>
+  <div class="row" id="filters">
+    <span id="colorBtns"></span>
+    <input id="search" type="search" placeholder="t:creature o:flying  (Enter)" aria-label="Scryfall search">
+    <select id="sort" aria-label="Sort"></select>
+    <button id="sortDir" title="Sort direction">↑</button>
+    <label><input type="checkbox" id="selOnly"> Selected only</label>
+    <label><input type="checkbox" id="hideBanned"> Hide banned</label>
+    <label class="size">Size <input type="range" id="size" min="90" max="400" step="5"></label>
+    <span id="counter"></span>
+  </div>
+</header>
+<main id="grid"></main>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
