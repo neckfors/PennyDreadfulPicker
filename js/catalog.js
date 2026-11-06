@@ -2,6 +2,9 @@
 // plus the rarity/set/artist/year of all printings. Years are then picked locally, without Scryfall.
 import { search, slim } from './scryfall.js';
 
+// Bump when the printing choice changes: the next Fetch all then rebuilds the catalogue from scratch.
+export const CATALOG_VERSION = 1;
+
 // Frame effects, promo-like sets and borders that make a printing hard to read.
 const WEIRD_EFFECTS = ['showcase', 'extendedart', 'inverted', 'shatteredglass', 'textless', 'etched', 'fullart', 'draft', 'companion', 'tombstone'];
 const WEIRD_SETS = ['memorabilia', 'funny', 'token', 'minigame', 'promo', 'box', 'masterpiece'];
