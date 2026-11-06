@@ -137,13 +137,15 @@ async function downloadImages() {
 // ---- Search ----
 // Searches the cards already fetched. Returns false when the query needs Scryfall instead.
 function searchLocally(q) {
-  const pool = [...S.cards, ...S.bannedCards, ...S.landCards];
   if (!S.cards.length) return false;
-  if (!hasSearchData(S.cards, true) || !hasSearchData(pool)) { status('Re-fetch cards to enable instant search; using Scryfall.'); return false; }
-  const hits = localSearch(q, pool);
+  if (!hasSearchData(S.cards, true)) { status('Re-fetch cards to enable instant search; using Scryfall.'); return false; }
+  // Banned/land cards saved before v2.2 lack text; leave them out rather than falling back to Scryfall.
+  const extra = [...S.bannedCards, ...S.landCards];
+  const ok = extra.filter(c => hasSearchData([c]));
+  const hits = localSearch(q, [...S.cards, ...ok]);
   if (!hits) return false;
   state.searchHits = hits;
-  status(`Search: ${hits.length} matches.`);
+  status(`Search: ${hits.length} matches.` + (ok.length < extra.length ? ' (Re-fetch banned/lands for full results.)' : ''));
   changed();
   return true;
 }
