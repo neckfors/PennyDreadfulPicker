@@ -5,6 +5,7 @@ import { classify, BIT } from './mana.js';
 import { search, printings, byNames, slim, syncImages, yearClause } from './scryfall.js';
 import { readText, parseList, applyList, bannedSet, isBanned, allLand } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
+import { buildCatalog, updateCatalog, deriveCards } from './catalog.js';
 import { localSearch, hasSearchData } from './query.js';
 import { VERSION } from './version.js';
 
@@ -70,18 +71,46 @@ $('tplDelete').onclick = () => {
 };
 
 // ---- Fetch ----
+// Fetch all: builds the catalogue of every PD card once, then only adds what is new.
+$('fetchAllBtn').onclick = async () => {
+  $('fetchAllBtn').disabled = $('fetchBtn').disabled = true;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!S.allCards.length) {
+      S.setAllCards(await buildCatalog(status));
+      status(`Catalogue built: ${S.allCards.length} cards.`);
+    } else {
+      const since = state.allChecked && new Date(Date.parse(state.allChecked) - 7 * 864e5).toISOString().slice(0, 10);
+      const r = await updateCatalog(S.allCards, since, status);
+      S.setAllCards(r.catalog);
+      status(`Catalogue updated: ${r.added} new, ${r.removed} removed, ${S.allCards.length} cards.`);
+    }
+    state.allChecked = today;
+    S.save();
+    await S.saveAllCards();
+  } catch (e) {
+    status(`Fetch all failed: ${e.message}`);
+  } finally {
+    $('fetchAllBtn').disabled = $('fetchBtn').disabled = false;
+  }
+};
+
 $('fetchBtn').onclick = async () => {
   const years = state.picked.filter(y => y);
   if (!years.length) return status('Pick at least one year first.');
   $('fetchBtn').disabled = true;
   try {
-    status('Searching Scryfall…');
-    const raw = await search(`f:pd (${yearClause(years)} or t:land)`, (n, t) => status(`Searching… ${n} / ${t}`));
-    const list = raw.map(slim);
-    status('Fetching printings…');
-    const prints = await printings(`f:pd ${yearClause(years)}`, (n, t) => status(`Printings… ${n} / ${t}`));
-    // Lands from other years have no printing in the picked years; they keep their own printing.
-    list.forEach(c => { c.prints = prints.get(c.oracle_id) || [[c.rarity, c.set, c.artist || '']]; });
+    let list;
+    if (S.allCards.length) list = deriveCards(S.allCards, years);   // from the catalogue, no Scryfall call
+    else {
+      status('Searching Scryfall…');
+      const raw = await search(`f:pd (${yearClause(years)} or t:land)`, (n, t) => status(`Searching… ${n} / ${t}`));
+      list = raw.map(slim);
+      status('Fetching printings…');
+      const prints = await printings(`f:pd ${yearClause(years)}`, (n, t) => status(`Printings… ${n} / ${t}`));
+      // Lands from other years have no printing in the picked years; they keep their own printing.
+      list.forEach(c => { c.prints = prints.get(c.oracle_id) || [[c.rarity, c.set, c.artist || '']]; });
+    }
     list.forEach(classify);
     S.setCards(list);
     state.fetchedYears = years;

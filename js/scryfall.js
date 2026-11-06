@@ -20,16 +20,19 @@ async function politeFetch(url, opts) {
 }
 
 // Runs one search and follows its pages. Returns raw card objects ([] when nothing matches).
-export async function search(q, onPage, unique = 'cards') {
+// With onBatch, each page goes to it instead of being collected (for searches too big to hold).
+export async function search(q, onPage, unique = 'cards', onBatch) {
   let url = `${API}?unique=${unique}&q=${encodeURIComponent(q)}`;
   const out = [];
+  let count = 0;
   while (url) {
     const res = await politeFetch(url);
     const body = await res.json();
     if (res.status === 404 && body.code === 'not_found') return out;
     if (!res.ok) throw new Error(body.details || `Scryfall error ${res.status}`);
-    out.push(...body.data);
-    onPage && onPage(out.length, body.total_cards);
+    count += body.data.length;
+    if (onBatch) onBatch(body.data); else out.push(...body.data);
+    onPage && onPage(count, body.total_cards);
     url = body.has_more ? body.next_page : null;
     if (url) await sleep(120);
   }
@@ -58,7 +61,7 @@ export async function byNames(names, onPage) {
 
 const pick = (o, ks) => Object.fromEntries(ks.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 const FIELDS = ['id', 'oracle_id', 'name', 'mana_cost', 'cmc', 'colors', 'color_identity', 'type_line', 'rarity',
-  'set', 'set_name', 'released_at', 'prices', 'power', 'toughness', 'edhrec_rank', 'penny_rank', 'artist', 'layout', 'oracle_text', 'flavor_name'];
+  'set', 'set_name', 'released_at', 'prices', 'power', 'toughness', 'edhrec_rank', 'penny_rank', 'artist', 'layout', 'oracle_text'];
 
 // Rarity, set and artist of every printing, grouped by oracle id, for r:/s:/a: search.
 export async function printings(q, onPage) {
@@ -77,7 +80,7 @@ export function slim(c) {
   if (c.image_uris) s.image = c.image_uris.normal;
   if (c.card_faces) {
     s.card_faces = c.card_faces.map(f => ({
-      ...pick(f, ['name', 'mana_cost', 'type_line', 'colors', 'power', 'toughness', 'oracle_text', 'artist', 'flavor_name']),
+      ...pick(f, ['name', 'mana_cost', 'type_line', 'colors', 'power', 'toughness', 'oracle_text', 'artist']),
       image: f.image_uris ? f.image_uris.normal : undefined,
     }));
   }

@@ -6,6 +6,7 @@ const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i).join(
 export const state = {
   pools: [range(2003, 2009), range(2010, 2018), range(2019, 2025)],
   picked: [null, null, null],
+  allChecked: null,    // date (YYYY-MM-DD) the catalogue was last built or updated
   fetchedYears: null,  // years used by the last fetch, also used by the search box
   templates: {},
   selected: [],        // oracle ids
@@ -24,6 +25,8 @@ export let cards = [];
 export let bannedCards = [];  // banned cards looked up by name, for "Banned only" without a fetch
 
 export function setCards(list) { cards = list; }
+export let allCards = [];     // catalogue of every PD card (see catalog.js), empty until "Fetch all"
+export function setAllCards(list) { allCards = list; }
 export let landCards = [];    // all PD-legal lands, fetched when the Lands button is turned on
 export function setLandCards(list) { landCards = list; }
 export function setBannedCards(list) {
@@ -37,6 +40,7 @@ export async function load() {
   cards = (await db.get('kv', 'cards')) || [];
   setBannedCards((await db.get('kv', 'bannedCards')) || []);
   landCards = (await db.get('kv', 'landCards')) || [];
+  allCards = (await db.get('kv', 'allCards')) || [];
 }
 
 let timer;
@@ -45,6 +49,7 @@ export function save() {
   timer = setTimeout(() => db.put('kv', 'state', { ...state }), 300);
 }
 export const saveCards = () => db.put('kv', 'cards', cards);
+export const saveAllCards = () => db.put('kv', 'allCards', allCards);
 export const saveLandCards = () => db.put('kv', 'landCards', landCards);
 export const saveBannedCards = () => db.put('kv', 'bannedCards', bannedCards);
 
