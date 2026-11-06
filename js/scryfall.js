@@ -7,8 +7,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const yearClause = years => '(' + years.map(y => `year:${y}`).join(' or ') + ')';
 
 // Runs one search and follows its pages. Returns raw card objects ([] when nothing matches).
-export async function search(q, onPage) {
-  let url = `${API}?unique=cards&q=${encodeURIComponent(q)}`;
+export async function search(q, onPage, unique = 'cards') {
+  let url = `${API}?unique=${unique}&q=${encodeURIComponent(q)}`;
   const out = [];
   while (url) {
     const res = await fetch(url);
@@ -46,6 +46,17 @@ export async function byNames(names, onPage) {
 const pick = (o, ks) => Object.fromEntries(ks.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 const FIELDS = ['id', 'oracle_id', 'name', 'mana_cost', 'cmc', 'colors', 'color_identity', 'type_line', 'rarity',
   'set', 'set_name', 'released_at', 'prices', 'power', 'toughness', 'edhrec_rank', 'penny_rank', 'artist', 'layout', 'oracle_text', 'flavor_name'];
+
+// Rarity, set and artist of every printing, grouped by oracle id, for r:/s:/a: search.
+export async function printings(q, onPage) {
+  const map = new Map();
+  for (const c of await search(q, onPage, 'prints')) {
+    const list = map.get(c.oracle_id) || map.set(c.oracle_id, []).get(c.oracle_id);
+    const p = [c.rarity, c.set, c.artist || ''];
+    if (!list.some(x => x.join() === p.join())) list.push(p);
+  }
+  return map;
+}
 
 // Keeps only what the app uses, so the cache and export files stay small.
 export function slim(c) {

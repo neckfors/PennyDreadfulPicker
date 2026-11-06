@@ -1,10 +1,13 @@
 // Local search: a small Scryfall-style query parser and matcher. Unsupported keys throw Unsupported.
 export class Unsupported extends Error {}
-// r:, s: and a: are left to Scryfall: they match any printing of a card, and only one printing is stored.
+// r:, s: and a: match any printing of a card, so they use the `prints` list ([rarity, set, artist]) saved with it.
 
+const RARITY = { c: 0, common: 0, u: 1, uncommon: 1, r: 2, rare: 2, m: 3, mythic: 3 };
+const RANK = { ...RARITY, special: 4, bonus: 5 };
 const COLOR_NAMES = { white: 'w', blue: 'u', black: 'b', red: 'r', green: 'g' };
 const DFC_LAYOUTS = ['transform', 'modal_dfc', 'double_faced_token', 'reversible_card'];
-const TEXT_KEYS = ['name', 'n', 't', 'type', 'o', 'oracle', 'is'];
+const TEXT_KEYS = ['name', 'n', 't', 'type', 'o', 'oracle', 'is', 'a', 'artist', 's', 'set', 'e'];
+const prints = c => c.prints || [[c.rarity, c.set, c.artist || '']];
 
 // ---- Parser: tokens -> tree of {or|and|not|term} ----
 function tokenize(q) {
@@ -137,22 +140,34 @@ function termFn({ key, op, val, neg }) {
       fn = c => [c[k], ...faces(c).map(f => f[k])].some(x => x !== undefined && cmp(statNum(x), op, n));
       break;
     }
+    case 'r': case 'rarity':
+      if (!(v in RARITY)) throw new Unsupported('rarity');
+      fn = (c, p) => p[0] in RANK && cmp(RANK[p[0]], op, RARITY[v]);
+      fn.print = true;
+      break;
+    case 's': case 'set': case 'e': fn = (c, p) => p[1] === v; fn.print = true; break;
+    case 'a': case 'artist': fn = (c, p) => p[2].toLowerCase().includes(v); fn.print = true; break;
     case 'is': if (v !== 'dfc') throw new Unsupported('is'); fn = c => DFC_LAYOUTS.includes(c.layout); break;
     default: throw new Unsupported(key);
   }
-  return neg ? c => !fn(c) : fn;
+  const out = neg ? (c, p) => !fn(c, p) : fn;
+  out.print = !!fn.print;
+  return out;
 }
 
+// Compiled matchers take (card, printing); only r:, s: and a: look at the printing.
 function compile(node) {
   if (node.term) return termFn(node.term);
-  if (node.not) { const f = compile(node.not); return c => !f(c); }
+  if (node.not) { const f = compile(node.not); const g = (c, p) => !f(c, p); g.print = f.print; return g; }
   const fs = (node.or || node.and).map(compile);
-  return node.or ? c => fs.some(f => f(c)) : c => fs.every(f => f(c));
+  const g = node.or ? (c, p) => fs.some(f => f(c, p)) : (c, p) => fs.every(f => f(c, p));
+  g.print = fs.some(f => f.print);
+  return g;
 }
 
 // True when stored cards carry the text fields local search needs (older saves lack them).
-export const hasSearchData = list => list.every(c => typeof c.oracle_text === 'string'
-  || (c.card_faces && c.card_faces.every(f => typeof f.oracle_text === 'string')));
+export const hasSearchData = (list, needPrints) => list.every(c => (!needPrints || Array.isArray(c.prints))
+  && (typeof c.oracle_text === 'string' || (c.card_faces && c.card_faces.every(f => typeof f.oracle_text === 'string'))));
 
 // Returns the oracle ids of matching cards, or null when the query needs Scryfall.
 export function localSearch(q, pool) {
@@ -160,6 +175,6 @@ export function localSearch(q, pool) {
   try { fn = compile(parse(tokenize(q))); } catch (e) { if (e instanceof Unsupported) return null; throw e; }
   const seen = new Set();
   const out = [];
-  for (const c of pool) if (!seen.has(c.oracle_id) && fn(c)) { seen.add(c.oracle_id); out.push(c.oracle_id); }
+  for (const c of pool) if (!seen.has(c.oracle_id) && (fn.print ? prints(c).some(p => fn(c, p)) : fn(c))) { seen.add(c.oracle_id); out.push(c.oracle_id); }
   return out;
 }

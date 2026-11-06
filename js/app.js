@@ -2,7 +2,7 @@
 import * as S from './state.js';
 import { state } from './state.js';
 import { classify, BIT } from './mana.js';
-import { search, byNames, slim, syncImages, yearClause } from './scryfall.js';
+import { search, printings, byNames, slim, syncImages, yearClause } from './scryfall.js';
 import { readText, parseList, applyList, bannedSet, isBanned, allLand } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
 import { localSearch, hasSearchData } from './query.js';
@@ -78,6 +78,9 @@ $('fetchBtn').onclick = async () => {
     status('Searching Scryfall…');
     const raw = await search(`f:pd (${yearClause(years)} or t:land)`, (n, t) => status(`Searching… ${n} / ${t}`));
     const list = raw.map(slim);
+    status('Fetching printings…');
+    const prints = await printings(`f:pd (${yearClause(years)} or t:land)`, (n, t) => status(`Printings… ${n} / ${t}`));
+    list.forEach(c => { c.prints = prints.get(c.oracle_id); });
     list.forEach(classify);
     S.setCards(list);
     state.fetchedYears = years;
@@ -106,7 +109,7 @@ async function downloadImages() {
 function searchLocally(q) {
   const pool = [...S.cards, ...S.bannedCards, ...S.landCards];
   if (!S.cards.length) return false;
-  if (!hasSearchData(pool)) { status('Re-fetch cards to enable instant search; using Scryfall.'); return false; }
+  if (!hasSearchData(S.cards, true) || !hasSearchData(pool)) { status('Re-fetch cards to enable instant search; using Scryfall.'); return false; }
   const hits = localSearch(q, pool);
   if (!hits) return false;
   state.searchHits = hits;
