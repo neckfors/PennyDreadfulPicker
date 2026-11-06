@@ -25,6 +25,7 @@
     <button id="bannedClear">Clear banned</button>
     <button id="exportBtn">Export</button>
     <button id="importBtn">Import</button>
+    <button id="helpBtn">Help</button>
     <span id="version"></span>
     <input type="file" id="bannedFile" accept=".txt,.dek,.dec,text/plain" multiple hidden>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
@@ -44,6 +45,10 @@
   </div>
 </header>
 <main id="grid"></main>
+<dialog id="helpDlg">
+  <div id="helpBody"></div>
+  <form method="dialog"><button>Close</button></form>
+</dialog>
 <dialog id="clearDlg">
   <form method="dialog">
     <p id="clearMsg"></p>

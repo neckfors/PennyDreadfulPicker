@@ -7,6 +7,7 @@ import { readText, parseList, applyList, bannedSet, isBanned, allLand } from './
 import { render, forgetImages, SORTS } from './grid.js';
 import { buildCatalog, updateCatalog, deriveCards, repick, CATALOG_VERSION, PICK_VERSION } from './catalog.js';
 import { localSearch, hasSearchData } from './query.js';
+import { renderHelp } from './help.js';
 import { VERSION } from './version.js';
 
 const $ = id => document.getElementById(id);
@@ -98,8 +99,11 @@ $('fetchAllBtn').onclick = async e => {
     state.allChecked = today;
     S.save();
     await S.saveAllCards();
-    if (S.cards.length && state.fetchedYears) {   // refresh the grid with the catalogue's printings
-      const list = deriveCards(S.allCards, state.fetchedYears);
+    const picked = state.picked.filter(y => y);
+    const years = picked.length ? picked : state.fetchedYears;
+    if (years && years.length) {   // build the grid for the picked years from the catalogue
+      state.fetchedYears = years;
+      const list = deriveCards(S.allCards, years);
       list.forEach(classify);
       S.setCards(list);
       forgetImages();
@@ -227,6 +231,8 @@ function drawFilters() {
 for (const [k, label] of Object.entries(SORTS)) $('sort').add(new Option(label, k));
 $('sort').onchange = () => { state.sort = $('sort').value; changed(); };
 $('sortDir').onclick = () => { state.sortDesc = !state.sortDesc; $('sortDir').textContent = state.sortDesc ? '↓' : '↑'; changed(); };
+$('helpBtn').onclick = () => { $('helpBody').innerHTML = renderHelp(); $('helpDlg').showModal(); };
+
 // ---- Clear selected: confirmed by typing "clear" ----
 $('clearSel').onclick = () => {
   if (!state.selected.length) return status('Nothing is selected.');
