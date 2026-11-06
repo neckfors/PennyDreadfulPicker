@@ -108,29 +108,46 @@ export function imageKey(c, face) {
   return f && f.image ? [`${c.id}:${face}`, f.image] : [`${c.id}:0`, c.card_faces?.[0]?.image];
 }
 
+// Card tiles kept between renders (keyed by card id and face) so filtering only moves them, never redraws images.
+const tiles = new Map();
+
 export function forgetImages() {
   for (const u of urls.values()) if (u.startsWith('blob:')) URL.revokeObjectURL(u);
   urls.clear();
+  observer.disconnect();
+  tiles.clear();
+}
+
+function tile(c, face) {
+  const [img, url] = imageKey(c, face);
+  const key = `${c.oracle_id}|${img}|${url}`;
+  let el = tiles.get(key);
+  if (el) return el;
+  el = document.createElement('div');
+  el.dataset.oid = c.oracle_id;
+  el.title = c.name;
+  el.dataset.img = img;
+  el.dataset.url = url;
+  el.innerHTML = `<span class="name"></span>`;
+  el.firstChild.textContent = c.name;
+  tiles.set(key, el);
+  observer.observe(el);
+  return el;
 }
 
 export function render(grid, counter) {
-  observer.disconnect();
   const list = visible();
   const sel = new Set(state.selected);
   const banned = bannedSet(state.banned);
-  const frag = document.createDocumentFragment();
-  for (const [c, face] of list) {
-    const el = document.createElement('div');
-    el.className = 'card' + (sel.has(c.oracle_id) ? ' sel' : '') + (isBanned(banned, c) ? ' banned' : '');
-    el.dataset.oid = c.oracle_id;
-    el.title = c.name;
-    [el.dataset.img, el.dataset.url] = imageKey(c, face);
-    el.innerHTML = `<span class="name"></span>`;
-    el.firstChild.textContent = c.name;
-    frag.append(el);
-    observer.observe(el);
-  }
-  grid.replaceChildren(frag);
+  const els = list.map(([c, face]) => {
+    const el = tile(c, face);
+    const cls = 'card' + (sel.has(c.oracle_id) ? ' sel' : '') + (isBanned(banned, c) ? ' banned' : '');
+    if (el.className !== cls) el.className = cls;
+    return el;
+  });
+  // Skip the DOM work when nothing moved (e.g. a selection-only change).
+  const kids = grid.children;
+  if (els.length !== kids.length || els.some((el, i) => kids[i] !== el)) grid.replaceChildren(...els);
   if (!list.length && !cards.length && !state.filters.banned) grid.innerHTML = '<p class="empty">No cards yet. Pick years and press Fetch cards.</p>';
   counter.textContent = `${list.length} / ${pool().length}`;
 }
