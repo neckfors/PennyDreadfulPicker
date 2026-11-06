@@ -64,8 +64,9 @@ export function visible() {
   const banned = bannedSet(state.banned);
   const out = [];
   for (const c of pool()) {
-    if (state.selOnly && !sel.has(c.oracle_id)) continue;
-    if (hits && !hits.has(c.oracle_id)) continue;
+    // The banned view shows every banned card; only the colour and land filters apply.
+    if (!f.banned && state.selOnly && !sel.has(c.oracle_id)) continue;
+    if (!f.banned && hits && !hits.has(c.oracle_id)) continue;
     const ban = isBanned(banned, c);
     if (f.banned ? !ban : state.hideBanned && ban) continue;
     let face = 0;

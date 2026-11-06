@@ -14,6 +14,7 @@ const grid = $('grid');
 // Banned info shows while "Banned only" is on.
 const draw = () => {
   $('info').hidden = !state.filters.banned;
+  $('search').disabled = $('selOnly').disabled = state.filters.banned;
   render(grid, $('counter'));
 };
 const status = t => { $('status').textContent = t; };
