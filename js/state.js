@@ -23,6 +23,8 @@ export let cards = [];
 export let bannedCards = [];  // banned cards looked up by name, for "Banned only" without a fetch
 
 export function setCards(list) { cards = list; }
+export let landCards = [];    // all PD-legal lands, fetched when the Lands button is turned on
+export function setLandCards(list) { landCards = list; }
 export function setBannedCards(list) {
   const seen = new Set();
   bannedCards = list.filter(c => !seen.has(c.oracle_id) && seen.add(c.oracle_id));
@@ -33,6 +35,7 @@ export async function load() {
   if (s) Object.assign(state, s);
   cards = (await db.get('kv', 'cards')) || [];
   setBannedCards((await db.get('kv', 'bannedCards')) || []);
+  landCards = (await db.get('kv', 'landCards')) || [];
 }
 
 let timer;
@@ -41,10 +44,11 @@ export function save() {
   timer = setTimeout(() => db.put('kv', 'state', { ...state }), 300);
 }
 export const saveCards = () => db.put('kv', 'cards', cards);
+export const saveLandCards = () => db.put('kv', 'landCards', landCards);
 export const saveBannedCards = () => db.put('kv', 'bannedCards', bannedCards);
 
 export function exportFile() {
-  const blob = new Blob([JSON.stringify({ app: 'pd-picker', version: 1, state, cards, bannedCards })], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'pd-picker', version: 1, state, cards, bannedCards, landCards })], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `pd-picker-${new Date().toISOString().slice(0, 10)}.json`;
@@ -58,7 +62,9 @@ export async function importFile(file) {
   Object.assign(state, data.state);
   cards = data.cards || [];
   bannedCards = data.bannedCards || [];
+  landCards = data.landCards || [];
   await db.put('kv', 'state', { ...state });
   await saveCards();
   await saveBannedCards();
+  await saveLandCards();
 }

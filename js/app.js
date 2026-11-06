@@ -92,7 +92,7 @@ $('fetchBtn').onclick = async () => {
 
 async function downloadImages() {
   forgetImages();
-  await syncImages([...S.cards, ...S.bannedCards], (d, t) => status(`Images ${d} / ${t}`));
+  await syncImages([...S.cards, ...S.bannedCards, ...S.landCards], (d, t) => status(`Images ${d} / ${t}`));
   draw();
 }
 
@@ -136,6 +136,7 @@ function drawFilters() {
       else state.filters[key] = !state.filters[key];
       paint(); changed();
       if (key === 'banned' && state.filters.banned) loadBannedCards();
+      if (key === 'lands' && state.filters.lands) loadLands();
     };
     paint();
     $('colorBtns').append(b);
@@ -152,6 +153,22 @@ $('size').oninput = () => {
   document.documentElement.style.setProperty('--cw', state.size + 'px');
   S.save();
 };
+
+// Fetches all PD-legal lands, so Lands works without (or beyond) a year fetch.
+async function loadLands() {
+  try {
+    status('Fetching lands…');
+    const list = (await search('f:pd t:land', (n, t) => status(`Lands ${n} / ${t}`))).map(slim);
+    list.forEach(classify);
+    S.setLandCards(list);
+    await S.saveLandCards();
+    changed();
+    await downloadImages();
+    status(`${list.length} lands.`);
+  } catch (e) {
+    status(`Land fetch failed: ${e.message}`);
+  }
+}
 
 // Looks up banned cards that aren't loaded yet, so "Banned only" works without a fetch.
 let bannedLookup = null;  // one lookup at a time, so cards are never added twice
@@ -231,7 +248,7 @@ $('importFile').onchange = async () => {
   if (!file) return;
   try {
     await S.importFile(file);
-    [...S.cards, ...S.bannedCards].forEach(classify);
+    [...S.cards, ...S.bannedCards, ...S.landCards].forEach(classify);
     applyStateToUi();
     await downloadImages();
     status('Imported.');
@@ -253,7 +270,7 @@ function applyStateToUi() {
 }
 
 await S.load();
-[...S.cards, ...S.bannedCards].forEach(classify);
+[...S.cards, ...S.bannedCards, ...S.landCards].forEach(classify);
 $('version').textContent = 'v' + VERSION;
 applyStateToUi();
 if (state.filters.banned) loadBannedCards();

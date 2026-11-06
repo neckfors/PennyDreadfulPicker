@@ -1,6 +1,6 @@
 // Filtering, sorting and drawing the card grid. Never calls Scryfall.
 import * as db from './db.js';
-import { state, cards, bannedCards } from './state.js';
+import { state, cards, bannedCards, landCards } from './state.js';
 import { matchFace, COLORS, BIT } from './mana.js';
 import { bannedSet, isBanned } from './banned.js';
 
@@ -47,11 +47,12 @@ function compare(a, b) {
   return r || a.name.localeCompare(b.name);
 }
 
-// Cards to filter: the fetched list, plus banned cards fetched by name while "Banned only" is on.
+// Cards to filter: the fetched list, plus banned cards while "Banned only" is on and all PD lands while Lands is on.
 function pool() {
-  if (!state.filters.banned) return cards;
+  const extra = [...(state.filters.banned ? bannedCards : []), ...(state.filters.lands ? landCards : [])];
+  if (!extra.length) return cards;
   const have = new Set(cards.map(c => c.oracle_id));
-  return [...cards, ...bannedCards.filter(c => !have.has(c.oracle_id))];
+  return [...cards, ...extra.filter(c => !have.has(c.oracle_id) && have.add(c.oracle_id))];
 }
 
 // Returns visible cards as [card, faceIndex] pairs.
