@@ -88,6 +88,10 @@ $('fetchAllBtn').onclick = async () => {
     state.allChecked = today;
     S.save();
     await S.saveAllCards();
+    state.allImages = true;
+    S.save();
+    await downloadImages();
+    status(`Catalogue and images ready: ${S.allCards.length} cards.`);
   } catch (e) {
     status(`Fetch all failed: ${e.message}`);
   } finally {
@@ -119,7 +123,6 @@ $('fetchBtn').onclick = async () => {
     $('search').value = '';
     await S.saveCards();
     changed();
-    await downloadImages();
     status(`Fetched ${list.length} cards.`);
   } catch (e) {
     status(`Fetch failed: ${e.message}`);
@@ -130,7 +133,8 @@ $('fetchBtn').onclick = async () => {
 
 async function downloadImages() {
   forgetImages();
-  await syncImages([...S.cards, ...S.bannedCards, ...S.landCards], (d, t) => status(`Images ${d} / ${t}`));
+  // After "Fetch all" every catalogue image is kept; otherwise only the loaded cards'.
+  await syncImages([...(state.allImages ? S.allCards : S.cards), ...S.bannedCards, ...S.landCards], (d, t) => status(`Images ${d} / ${t}`));
   draw();
 }
 
