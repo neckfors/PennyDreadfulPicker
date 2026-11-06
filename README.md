@@ -19,7 +19,7 @@ A small web app for picking Penny Dreadful cards from random release years, usin
 
 ### Banned list
 
-Upload text files with one card per line; you can pick several files at once. Each file is read row by row until the first empty row (so a sideboard after it is skipped). Counts like `2 Swords to Plowshares` are ignored. Lands are never banned and are listed as ignored. **Banned: add file** adds to the current list, **Banned: replace** replaces it. Banned cards are struck through. **Hide banned** removes them from view, and the **⊘ Banned** button in the filter bar shows only banned cards (colour filters, search and sort still apply). It works without a fetch: banned cards that are not loaded are looked up on Scryfall by name.
+Upload text files with one card per line; you can pick several files at once. Each file is read row by row until the first empty row (so a sideboard after it is skipped). Counts like `2 Swords to Plowshares` are ignored, and rows with count 0 are skipped. Lands are never banned and are listed as ignored. **Banned: add file** adds to the current list, **Banned: replace** replaces it. Banned cards are struck through. **Hide banned** removes them from view, and the **⊘ Banned** button in the filter bar shows only banned cards (colour filters, search and sort still apply). It works without a fetch: banned cards that are not loaded are looked up on Scryfall by name.
 
 ### Saving
 

@@ -14,6 +14,7 @@ export function parseList(text) {
   for (const raw of text.replace(/^﻿/, '').split(/\r\n|\r|\n/)) {
     const line = raw.trim();
     if (!line) break;
+    if (/^0+x?\s/i.test(line)) continue;  // rows with count 0 are skipped
     names.push(line.replace(/^\d+x?\s+/i, ''));
   }
   return names;
