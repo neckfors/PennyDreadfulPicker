@@ -22,6 +22,10 @@ jobs:
         run: |
           mkdir -p _site
           cp -r css js _site/
+          # Cache busting: every deploy links to the scripts and styles with a new ?v=, so browsers load fresh copies.
+          V=${GITHUB_SHA::8}
+          sed -i -E "s#(from '\./[a-z]+\.js)'#\1?v=$V'#g" _site/js/*.js
+          sed -i -E "s#(href=\"css/style\.css|src=\"js/app\.js)\"#\1?v=$V\"#g" index.html
           npx --yes staticrypt@3.5.4 index.html -p "$PASSWORD" -d _site --short --remember 30
       - uses: actions/upload-pages-artifact@v3
       - uses: actions/deploy-pages@v4
