@@ -154,7 +154,12 @@ $('size').oninput = () => {
 };
 
 // Looks up banned cards that aren't loaded yet, so "Banned only" works without a fetch.
-async function loadBannedCards() {
+let bannedLookup = null;  // one lookup at a time, so cards are never added twice
+function loadBannedCards() {
+  bannedLookup = (bannedLookup || Promise.resolve()).then(lookUpBanned);
+  return bannedLookup;
+}
+async function lookUpBanned() {
   const loaded = [...S.cards, ...S.bannedCards];
   const missing = state.banned.filter(n => !loaded.some(c => isBanned(bannedSet([n]), c)));
   if (!missing.length) return;

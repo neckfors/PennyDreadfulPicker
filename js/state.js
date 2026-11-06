@@ -23,13 +23,16 @@ export let cards = [];
 export let bannedCards = [];  // banned cards looked up by name, for "Banned only" without a fetch
 
 export function setCards(list) { cards = list; }
-export function setBannedCards(list) { bannedCards = list; }
+export function setBannedCards(list) {
+  const seen = new Set();
+  bannedCards = list.filter(c => !seen.has(c.oracle_id) && seen.add(c.oracle_id));
+}
 
 export async function load() {
   const s = await db.get('kv', 'state');
   if (s) Object.assign(state, s);
   cards = (await db.get('kv', 'cards')) || [];
-  bannedCards = (await db.get('kv', 'bannedCards')) || [];
+  setBannedCards((await db.get('kv', 'bannedCards')) || []);
 }
 
 let timer;
