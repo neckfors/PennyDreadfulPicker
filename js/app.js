@@ -409,6 +409,23 @@ $('info').onclick = e => {
   img.src = `https://api.scryfall.com/cards/named?format=image&version=normal&exact=${encodeURIComponent(b.dataset.name)}`;
   $('viewer').hidden = false;
 };
+// ---- Hover preview: the card at its full image size (488 x 680, smaller if the window is), beside the tile ----
+const hover = $('hover');
+const hideHover = () => { hover.hidden = true; };
+grid.addEventListener('mouseover', e => {
+  const t = e.target.closest('.card');
+  const im = t && t.querySelector('img');
+  if (!im || !matchMedia('(hover: hover)').matches) return hideHover();
+  const r = t.getBoundingClientRect();
+  const h = Math.min(680, innerHeight - 16), w = h * 488 / 680;
+  const right = r.right + 12 + w <= innerWidth, left = r.left - 12 - w >= 0;
+  const x = right || (!left && innerWidth - r.right >= r.left) ? Math.min(r.right + 12, innerWidth - w - 4) : Math.max(r.left - 12 - w, 4);
+  hover.style.cssText = `left:${x}px;top:${Math.max(8, Math.min(r.top + r.height / 2 - h / 2, innerHeight - h - 8))}px;width:${w}px;height:${h}px`;
+  hover.firstElementChild.src = im.src;
+  hover.hidden = false;
+});
+grid.addEventListener('mouseleave', hideHover);
+addEventListener('scroll', hideHover, { passive: true });
 $('viewer').onclick = () => { $('viewer').hidden = true; };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('viewer').hidden = true; });
 
