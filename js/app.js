@@ -9,7 +9,13 @@ import { VERSION } from './version.js';
 
 const $ = id => document.getElementById(id);
 const grid = $('grid');
-const draw = () => render(grid, $('counter'));
+// Banned info is only offered while "Banned only" is on.
+const draw = () => {
+  const on = state.filters.banned;
+  $('infoBtn').hidden = !on;
+  if (!on) { $('info').hidden = true; $('infoBtn').setAttribute('aria-expanded', false); }
+  render(grid, $('counter'));
+};
 const status = t => { $('status').textContent = t; };
 const notice = t => { $('notice').hidden = !t; $('notice').textContent = t || ''; };
 const changed = () => { S.save(); draw(); };
