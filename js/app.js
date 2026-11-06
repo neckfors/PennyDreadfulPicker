@@ -15,6 +15,9 @@ const grid = $('grid');
 const draw = () => {
   $('info').hidden = !state.filters.banned;
   $('search').disabled = $('selOnly').disabled = state.filters.banned;
+  const on = !!state.searchHits && !state.filters.banned;
+  $('search').classList.toggle('active', on);
+  $('searchCount').textContent = on ? `${state.searchHits.length} matches` : '';
   render(grid, $('counter'));
 };
 const status = t => { $('status').textContent = t; };
@@ -155,6 +158,11 @@ function searchLocally(q) {
   return true;
 }
 
+// Emptying the box (or its clear button) removes the search filter at once.
+$('search').oninput = () => {
+  if ($('search').value.trim() || !state.searchHits) return;
+  state.search = ''; state.searchHits = null; status(''); changed();
+};
 $('search').onkeydown = async e => {
   if (e.key !== 'Enter') return;
   const q = $('search').value.trim();

@@ -29,7 +29,10 @@ label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .year { display: inline-flex; align-items: center; gap: 4px; }
 .year input { width: 210px; }
 .year b { min-width: 3em; color: var(--warn); }
-#search { flex: 1; min-width: 180px; }
+#searchBox { flex: 1; min-width: 180px; position: relative; display: flex; }
+#search { flex: 1; min-width: 0; }
+#search.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); padding-right: 110px; }
+#searchCount { position: absolute; right: 34px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
 #status { color: var(--muted); }
 #counter { margin-left: auto; color: var(--muted); }
 #notice { color: var(--warn); padding: 2px 0; }
@@ -37,7 +40,7 @@ label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 #info .summary { margin: 0 0 4px; color: var(--muted); }
 #info button.toggle { background: none; border: 0; padding: 0; color: var(--muted); cursor: pointer; font: inherit; text-decoration: underline dotted; }
 #info button.toggle.warn { color: var(--warn); }
-#info ul { margin: 0 0 6px; padding: 0; list-style: none; columns: 260px; column-gap: 24px; }
+#info ul { margin: 0 0 6px; padding: 0; list-style: none; }
 #info li { padding: 1px 0; overflow-wrap: anywhere; }
 #info button.link { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-align: left; font: inherit; }
 #viewer { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: grid; place-items: center; z-index: 50; cursor: zoom-out; }
