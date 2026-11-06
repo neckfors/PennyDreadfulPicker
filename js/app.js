@@ -5,6 +5,7 @@ import { classify, BIT } from './mana.js';
 import { search, byNames, slim, syncImages, yearClause } from './scryfall.js';
 import { readText, parseList, applyList, bannedSet, isBanned, allLand } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
+import { localSearch, hasSearchData } from './query.js';
 import { VERSION } from './version.js';
 
 const $ = id => document.getElementById(id);
@@ -101,11 +102,25 @@ async function downloadImages() {
 }
 
 // ---- Search ----
+// Searches the cards already fetched. Returns false when the query needs Scryfall instead.
+function searchLocally(q) {
+  const pool = [...S.cards, ...S.bannedCards, ...S.landCards];
+  if (!S.cards.length) return false;
+  if (!hasSearchData(pool)) { status('Re-fetch cards to enable instant search; using Scryfall.'); return false; }
+  const hits = localSearch(q, pool);
+  if (!hits) return false;
+  state.searchHits = hits;
+  status(`Search: ${hits.length} matches.`);
+  changed();
+  return true;
+}
+
 $('search').onkeydown = async e => {
   if (e.key !== 'Enter') return;
   const q = $('search').value.trim();
   state.search = q;
   if (!q) { state.searchHits = null; status(''); return changed(); }
+  if (searchLocally(q)) return;
   const years = state.fetchedYears || state.picked.filter(y => y);
   if (!years.length) return status('Fetch cards first.');
   try {
