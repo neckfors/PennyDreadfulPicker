@@ -13,7 +13,7 @@ A small web app for picking Penny Dreadful cards from random release years, usin
 
 - **W U G R B** show cards castable with only the selected colours (any way of paying hybrid or Phyrexian mana counts). For double-faced cards only castable faces count, and an MDFC shows the face that matches.
 - **Multicolor**: two or more colours, or hybrid mana. **Colorless**: castable without coloured mana (lands never count). **Lands**: all PD-legal lands; turning it on fetches them from Scryfall, so it works without a year fetch.
-- **Search** takes full [Scryfall syntax](https://scryfall.com/docs/syntax) and runs on Enter, limited to the fetched years.
+- **Search** runs on Enter. Common syntax (names, `t:`, `o:`, `c:`, `id:`, `cmc`, `pow`, `tou`, `is:dfc`, `and`/`or`, `-`, brackets) is answered instantly from the fetched cards; anything else (for example `r:`, `s:`, `a:`) goes to [Scryfall](https://scryfall.com/docs/syntax), limited to the fetched years. Cards saved before v2.2 need one re-fetch for instant search.
 - **Sort** by name, mana value, colour, rarity, set, release date, prices, power, toughness and more. The arrow button flips the direction.
 - **Size** slider resizes the cards.
 

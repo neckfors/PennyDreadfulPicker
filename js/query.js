@@ -118,7 +118,7 @@ function termFn({ key, op, val, neg }) {
   if (TEXT_KEYS.includes(key) && op !== ':' && op !== '=') throw new Unsupported('op');
   let fn;
   switch (key) {
-    case 'name': case 'n': fn = c => [c.name, ...faces(c).map(f => f.name)].some(n => n && n.toLowerCase().includes(v)); break;
+    case 'name': case 'n': fn = c => [c.name, c.flavor_name, ...faces(c).flatMap(f => [f.name, f.flavor_name])].some(n => n && n.toLowerCase().includes(v)); break;
     case 't': case 'type': fn = c => texts(c, 'type_line').some(s => s.includes(v)); break;
     case 'o': case 'oracle':
       if (v.includes('~')) throw new Unsupported('~');

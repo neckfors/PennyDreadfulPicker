@@ -45,7 +45,7 @@ export async function byNames(names, onPage) {
 
 const pick = (o, ks) => Object.fromEntries(ks.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 const FIELDS = ['id', 'oracle_id', 'name', 'mana_cost', 'cmc', 'colors', 'color_identity', 'type_line', 'rarity',
-  'set', 'set_name', 'released_at', 'prices', 'power', 'toughness', 'edhrec_rank', 'penny_rank', 'artist', 'layout', 'oracle_text'];
+  'set', 'set_name', 'released_at', 'prices', 'power', 'toughness', 'edhrec_rank', 'penny_rank', 'artist', 'layout', 'oracle_text', 'flavor_name'];
 
 // Keeps only what the app uses, so the cache and export files stay small.
 export function slim(c) {
@@ -53,7 +53,7 @@ export function slim(c) {
   if (c.image_uris) s.image = c.image_uris.normal;
   if (c.card_faces) {
     s.card_faces = c.card_faces.map(f => ({
-      ...pick(f, ['name', 'mana_cost', 'type_line', 'colors', 'power', 'toughness', 'oracle_text', 'artist']),
+      ...pick(f, ['name', 'mana_cost', 'type_line', 'colors', 'power', 'toughness', 'oracle_text', 'artist', 'flavor_name']),
       image: f.image_uris ? f.image_uris.normal : undefined,
     }));
   }
