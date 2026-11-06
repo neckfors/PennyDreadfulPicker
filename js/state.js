@@ -7,6 +7,7 @@ export const state = {
   pools: [range(2003, 2009), range(2010, 2018), range(2019, 2025)],
   picked: [null, null, null],
   allImages: false,    // true once "Fetch all" has downloaded every catalogue image
+  pickVersion: null,   // PICK_VERSION the shown printings were chosen with
   catalogVersion: null, // CATALOG_VERSION the catalogue was built with (null = built before versions existed)
   allChecked: null,    // date (YYYY-MM-DD) the catalogue was last built or updated
   fetchedYears: null,  // years used by the last fetch, also used by the search box

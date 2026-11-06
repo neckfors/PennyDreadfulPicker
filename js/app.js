@@ -5,7 +5,7 @@ import { classify, BIT } from './mana.js';
 import { search, printings, byNames, slim, syncImages, yearClause } from './scryfall.js';
 import { readText, parseList, applyList, bannedSet, isBanned, allLand } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
-import { buildCatalog, updateCatalog, deriveCards, CATALOG_VERSION } from './catalog.js';
+import { buildCatalog, updateCatalog, deriveCards, repick, CATALOG_VERSION, PICK_VERSION } from './catalog.js';
 import { localSearch, hasSearchData } from './query.js';
 import { VERSION } from './version.js';
 
@@ -86,8 +86,10 @@ $('fetchAllBtn').onclick = async e => {
     if (rebuild || !S.allCards.length) {
       S.setAllCards(await buildCatalog(status));
       state.catalogVersion = CATALOG_VERSION;
+      state.pickVersion = PICK_VERSION;
       status(`Catalogue built: ${S.allCards.length} cards.`);
     } else {
+      if (state.pickVersion !== PICK_VERSION) { repick(S.allCards); state.pickVersion = PICK_VERSION; }   // new printing choice, no download
       const since = state.allChecked && new Date(Date.parse(state.allChecked) - 7 * 864e5).toISOString().slice(0, 10);
       const r = await updateCatalog(S.allCards, since, status);
       S.setAllCards(r.catalog);
