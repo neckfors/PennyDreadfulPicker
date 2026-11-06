@@ -33,10 +33,11 @@ label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 #status { color: var(--muted); }
 #counter { margin-left: auto; color: var(--muted); }
 #notice { color: var(--warn); padding: 2px 0; }
-#info { padding: 6px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 4px 24px; }
-#info h3 { margin: 6px 0 2px; font-size: 13px; color: var(--warn); }
-#info h3.ok { color: var(--muted); }
-#info ul { margin: 0; padding: 0; list-style: none; }
+#info { padding: 6px 0; }
+#info .summary { margin: 0 0 4px; color: var(--muted); }
+#info button.toggle { background: none; border: 0; padding: 0; color: var(--muted); cursor: pointer; font: inherit; text-decoration: underline dotted; }
+#info button.toggle.warn { color: var(--warn); }
+#info ul { margin: 0 0 6px; padding: 0; list-style: none; columns: 260px; column-gap: 24px; }
 #info li { padding: 1px 0; overflow-wrap: anywhere; }
 #info button.link { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-align: left; font: inherit; }
 #viewer { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: grid; place-items: center; z-index: 50; cursor: zoom-out; }

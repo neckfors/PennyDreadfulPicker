@@ -9,11 +9,9 @@ import { VERSION } from './version.js';
 
 const $ = id => document.getElementById(id);
 const grid = $('grid');
-// Banned info is only offered while "Banned only" is on.
+// Banned info shows while "Banned only" is on.
 const draw = () => {
-  const on = state.filters.banned;
-  $('infoBtn').hidden = !on;
-  if (!on) { $('info').hidden = true; $('infoBtn').setAttribute('aria-expanded', false); }
+  $('info').hidden = !state.filters.banned;
   render(grid, $('counter'));
 };
 const status = t => { $('status').textContent = t; };
@@ -258,41 +256,47 @@ function report(lands, zero, notFound) {
   drawInfo();
   S.save();
 }
+// One summary line; each count opens its list. Not-found names start open.
+const infoOpen = { notFound: true };
 function drawInfo() {
   const r = state.report;
-  const problems = r.notFound.length;
-  $('infoBtn').textContent = problems ? `Banned info (${problems})` : 'Banned info';
   const box = $('info');
   box.replaceChildren();
-  const section = (title, items, ok, clickable = true) => {
-    const div = document.createElement('div');
-    const h = document.createElement('h3');
-    h.textContent = `${title} (${items.length})`;
-    if (ok) h.className = 'ok';
+  const line = document.createElement('p');
+  line.className = 'summary';
+  const lists = [];
+  const part = (key, label, items, warn, clickable = true) => {
+    if (line.childNodes.length) line.append(' · ');
+    if (!items.length) { line.append(`0 ${label}`); return; }
+    const t = document.createElement('button');
+    const open = !!infoOpen[key];
+    t.className = 'toggle' + (warn ? ' warn' : '');
+    t.dataset.key = key;
+    t.setAttribute('aria-expanded', open);
+    t.textContent = `${items.length} ${label} ${open ? '▾' : '▸'}`;
+    line.append(t);
+    if (!open) return;
     const ul = document.createElement('ul');
-    for (const t of items.length ? items : ['None']) {
+    for (const n of items) {
       const li = document.createElement('li');
-      if (clickable && items.length) {
+      if (clickable) {
         const b = document.createElement('button');
-        b.className = 'link'; b.textContent = t; b.dataset.name = t;
+        b.className = 'link'; b.textContent = n; b.dataset.name = n;
         li.append(b);
-      } else li.textContent = t;
+      } else li.textContent = n;
       ul.append(li);
     }
-    div.append(h, ul);
-    box.append(div);
+    lists.push(ul);
   };
-  section('Files read', r.files, true, false);
-  section('Not found on Scryfall', r.notFound, !r.notFound.length);
-  section('Ignored: all faces are lands', r.lands, true);
-  section('Ignored: count 0', r.zero, true);
+  part('files', 'files read', r.files, false, false);
+  part('notFound', 'not found', r.notFound, true);
+  part('lands', 'lands ignored', r.lands);
+  part('zero', 'with count 0', r.zero);
+  box.append(line, ...lists);
 }
-$('infoBtn').onclick = () => {
-  const open = $('info').hidden;
-  $('info').hidden = !open;
-  $('infoBtn').setAttribute('aria-expanded', open);
-};
 $('info').onclick = e => {
+  const t = e.target.closest('button.toggle');
+  if (t) { infoOpen[t.dataset.key] = !infoOpen[t.dataset.key]; drawInfo(); return; }
   const b = e.target.closest('button.link');
   if (!b) return;
   const img = $('viewer').firstElementChild;
