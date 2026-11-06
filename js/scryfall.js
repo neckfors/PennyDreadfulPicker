@@ -6,19 +6,32 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 export const yearClause = years => '(' + years.map(y => `year:${y}`).join(' or ') + ')';
 
+// fetch() that waits and retries when Scryfall is rate limiting (HTTP 429, 5xx, or a blocked response
+// without CORS headers, which the browser reports as a network error). Backs off 2, 4, 8, 16 s.
+async function politeFetch(url, opts) {
+  for (let tries = 0; ; tries++) {
+    let res;
+    try { res = await fetch(url, opts); } catch (e) { if (tries >= 4) throw e; }
+    if (res && res.status !== 429 && res.status < 500) return res;
+    if (tries >= 4) return res;
+    const wait = (res && Number(res.headers.get('Retry-After'))) || 2 ** (tries + 1);
+    await sleep(wait * 1000);
+  }
+}
+
 // Runs one search and follows its pages. Returns raw card objects ([] when nothing matches).
 export async function search(q, onPage, unique = 'cards') {
   let url = `${API}?unique=${unique}&q=${encodeURIComponent(q)}`;
   const out = [];
   while (url) {
-    const res = await fetch(url);
+    const res = await politeFetch(url);
     const body = await res.json();
     if (res.status === 404 && body.code === 'not_found') return out;
     if (!res.ok) throw new Error(body.details || `Scryfall error ${res.status}`);
     out.push(...body.data);
     onPage && onPage(out.length, body.total_cards);
     url = body.has_more ? body.next_page : null;
-    if (url) await sleep(100);
+    if (url) await sleep(120);
   }
   return out;
 }
@@ -29,7 +42,7 @@ export async function byNames(names, onPage) {
   const notFound = [];
   for (let i = 0; i < names.length; i += 75) {
     if (i) await sleep(100);
-    const res = await fetch('https://api.scryfall.com/cards/collection', {
+    const res = await politeFetch('https://api.scryfall.com/cards/collection', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifiers: names.slice(i, i + 75).map(name => ({ name })) }),
