@@ -52,3 +52,4 @@ label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 }
 .empty { color: var(--muted); padding: 30px; }
 .cbtn .ban { font-size: 14px; }
+#version { color: var(--muted); font-size: 12px; }

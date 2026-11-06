@@ -23,6 +23,8 @@ Upload text files with one card per line; you can pick several files at once. Ea
 
 ### Saving
 
+The version number (for example v1.3) is shown at the end of the top bar.
+
 Everything is saved in the browser automatically. **Export** writes a file with everything (pools, picked years, card list, selection, banned list, filters, sort, search, size); **Import** loads one.
 
 ## Hosting

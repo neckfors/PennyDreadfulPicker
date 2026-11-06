@@ -5,6 +5,7 @@ import { classify, BIT } from './mana.js';
 import { search, byNames, slim, syncImages, yearClause } from './scryfall.js';
 import { readText, parseList, applyList, bannedSet, isBanned } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
+import { VERSION } from './version.js';
 
 const $ = id => document.getElementById(id);
 const grid = $('grid');
@@ -248,5 +249,6 @@ function applyStateToUi() {
 
 await S.load();
 [...S.cards, ...S.bannedCards].forEach(classify);
+$('version').textContent = 'v' + VERSION;
 applyStateToUi();
 if (state.filters.banned) loadBannedCards();
