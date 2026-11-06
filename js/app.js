@@ -3,7 +3,7 @@ import * as S from './state.js';
 import { state } from './state.js';
 import { classify, BIT } from './mana.js';
 import { search, byNames, slim, syncImages, yearClause } from './scryfall.js';
-import { readText, parseList, applyList, bannedSet, isBanned } from './banned.js';
+import { readText, parseList, applyList, bannedSet, isBanned, allLand } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
 import { VERSION } from './version.js';
 
@@ -182,15 +182,14 @@ async function lookUpBanned() {
   if (!missing.length) return;
   try {
     status('Looking up banned cards…');
-    const { found, notFound } = await byNames(missing, (n, t) => status(`Banned cards ${n} / ${t}`));
+    const { found, notFound } = await byNames(missing.map(n => n.split(' // ')[0]), (n, t) => status(`Banned cards ${n} / ${t}`));
     const list = found.map(slim);
     list.forEach(classify);
-    const lands = list.filter(c => c.isLand);
+    const lands = list.filter(allLand);
     state.banned = state.banned.filter(n => !lands.some(c => isBanned(bannedSet([n]), c)));
-    S.setBannedCards([...S.bannedCards, ...list.filter(c => !c.isLand)]);
+    S.setBannedCards([...S.bannedCards, ...list.filter(c => !allLand(c))]);
     await S.saveBannedCards();
-    notice([lands.length && `${lands.length} land${lands.length > 1 ? 's' : ''} ignored: ${lands.map(c => c.name).join(', ')}.`,
-      notFound.length && `Not found on Scryfall: ${notFound.join(', ')}.`].filter(Boolean).join(' '));
+    report(lands.map(c => c.name), [], notFound);
     changed();
     await downloadImages();
     status('');
@@ -217,7 +216,7 @@ $('bannedAdd').onclick = () => { bannedMode = 'add'; $('bannedFile').click(); };
 $('bannedReplace').onclick = () => { bannedMode = 'replace'; $('bannedFile').click(); };
 $('bannedClear').onclick = () => {
   if (!state.banned.length || !confirm(`Clear all ${state.banned.length} banned cards?`)) return;
-  state.banned = []; notice(''); changed();
+  state.banned = []; state.report = { files: [], lands: [], zero: [], notFound: [] }; notice(''); drawInfo(); changed();
 };
 $('bannedFile').onchange = async () => {
   const files = [...$('bannedFile').files];
@@ -225,19 +224,78 @@ $('bannedFile').onchange = async () => {
   if (!files.length) return;
   const names = [];
   const perFile = [];
+  const zeros = [];
   for (const f of files) {
-    const rows = parseList(await readText(f));
+    const { names: rows, zero } = parseList(await readText(f));
     names.push(...rows);
     perFile.push(`${f.name}: ${rows.length} rows`);
+    zeros.push(...zero);
   }
   const before = bannedMode === 'add' ? state.banned.length : 0;
   const { list, lands } = applyList(names, S.cards, state.banned, bannedMode);
   state.banned = list;
-  notice(`Read ${perFile.join(', ')}. Banned list now ${list.length} cards (${list.length - before} new).` +
-    (lands.length ? ` ${lands.length} land${lands.length > 1 ? 's' : ''} ignored: ${lands.join(', ')}.` : ''));
+  if (bannedMode === 'replace') state.report = { files: [], lands: [], zero: [], notFound: [] };
+  state.report.files.push(...perFile);
+  notice(`Banned list now ${list.length} cards (${list.length - before} new).`);
+  report(lands, zeros, []);
   changed();
-  if (state.filters.banned) loadBannedCards();
+  loadBannedCards();
 };
+
+// ---- Banned info ----
+const uniq = a => [...new Set(a)].sort((x, y) => x.localeCompare(y));
+function report(lands, zero, notFound) {
+  const r = state.report;
+  r.lands = uniq([...r.lands, ...lands]);
+  r.zero = uniq([...r.zero, ...zero]);
+  r.notFound = uniq([...r.notFound, ...notFound]);
+  drawInfo();
+  S.save();
+}
+function drawInfo() {
+  const r = state.report;
+  const problems = r.notFound.length;
+  $('infoBtn').textContent = problems ? `Banned info (${problems})` : 'Banned info';
+  const box = $('info');
+  box.replaceChildren();
+  const section = (title, items, ok, clickable = true) => {
+    const div = document.createElement('div');
+    const h = document.createElement('h3');
+    h.textContent = `${title} (${items.length})`;
+    if (ok) h.className = 'ok';
+    const ul = document.createElement('ul');
+    for (const t of items.length ? items : ['None']) {
+      const li = document.createElement('li');
+      if (clickable && items.length) {
+        const b = document.createElement('button');
+        b.className = 'link'; b.textContent = t; b.dataset.name = t;
+        li.append(b);
+      } else li.textContent = t;
+      ul.append(li);
+    }
+    div.append(h, ul);
+    box.append(div);
+  };
+  section('Files read', r.files, true, false);
+  section('Not found on Scryfall', r.notFound, !r.notFound.length);
+  section('Ignored: all faces are lands', r.lands, true);
+  section('Ignored: count 0', r.zero, true);
+}
+$('infoBtn').onclick = () => {
+  const open = $('info').hidden;
+  $('info').hidden = !open;
+  $('infoBtn').setAttribute('aria-expanded', open);
+};
+$('info').onclick = e => {
+  const b = e.target.closest('button.link');
+  if (!b) return;
+  const img = $('viewer').firstElementChild;
+  img.alt = b.dataset.name;
+  img.src = `https://api.scryfall.com/cards/named?format=image&version=normal&exact=${encodeURIComponent(b.dataset.name)}`;
+  $('viewer').hidden = false;
+};
+$('viewer').onclick = () => { $('viewer').hidden = true; };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('viewer').hidden = true; });
 
 // ---- Export / import ----
 $('exportBtn').onclick = () => S.exportFile();
@@ -258,6 +316,7 @@ $('importFile').onchange = async () => {
 };
 
 function applyStateToUi() {
+  drawInfo();
   drawYears(); drawTemplates(); drawFilters();
   $('sort').value = state.sort;
   $('sortDir').textContent = state.sortDesc ? '↓' : '↑';
@@ -271,6 +330,7 @@ function applyStateToUi() {
 
 await S.load();
 [...S.cards, ...S.bannedCards, ...S.landCards].forEach(classify);
+drawInfo();
 $('version').textContent = 'v' + VERSION;
 applyStateToUi();
 if (state.filters.banned) loadBannedCards();

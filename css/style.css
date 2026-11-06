@@ -33,6 +33,15 @@ label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 #status { color: var(--muted); }
 #counter { margin-left: auto; color: var(--muted); }
 #notice { color: var(--warn); padding: 2px 0; }
+#info { padding: 6px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 4px 24px; }
+#info h3 { margin: 6px 0 2px; font-size: 13px; color: var(--warn); }
+#info h3.ok { color: var(--muted); }
+#info ul { margin: 0; padding: 0; list-style: none; }
+#info li { padding: 1px 0; overflow-wrap: anywhere; }
+#info button.link { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-align: left; font: inherit; }
+#viewer { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: grid; place-items: center; z-index: 50; cursor: zoom-out; }
+#viewer[hidden] { display: none; }
+#viewer img { max-width: 92vw; max-height: 92vh; border-radius: 4.5%; }
 .size input { width: 110px; }
 
 #colorBtns { display: inline-flex; gap: 4px; }

@@ -10,6 +10,7 @@ export const state = {
   templates: {},
   selected: [],        // oracle ids
   banned: [],          // card names
+  report: { files: [], lands: [], zero: [], notFound: [] },  // what the last banned upload skipped and why
   filters: { colors: 0, multi: false, colorless: false, lands: false, banned: false },
   sort: 'cmc',
   sortDesc: false,
