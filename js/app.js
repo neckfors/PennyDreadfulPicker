@@ -409,13 +409,13 @@ $('info').onclick = e => {
   img.src = `https://api.scryfall.com/cards/named?format=image&version=normal&exact=${encodeURIComponent(b.dataset.name)}`;
   $('viewer').hidden = false;
 };
-// ---- Hover preview: the card at its full image size (488 x 680, smaller if the window is), beside the tile ----
+// ---- Preview: hold Shift over a card to see it at full image size (488 x 680, smaller if the window is) ----
 const hover = $('hover');
+let hovered = null;   // tile under the mouse
 const hideHover = () => { hover.hidden = true; };
-grid.addEventListener('mouseover', e => {
-  const t = e.target.closest('.card');
-  const im = t && t.querySelector('img');
-  if (!im || !matchMedia('(hover: hover)').matches) return hideHover();
+function showHover(t) {
+  const im = t.querySelector('img');
+  if (!im) return;
   const r = t.getBoundingClientRect();
   const h = Math.min(680, innerHeight - 16), w = h * 488 / 680;
   const right = r.right + 12 + w <= innerWidth, left = r.left - 12 - w >= 0;
@@ -423,9 +423,16 @@ grid.addEventListener('mouseover', e => {
   hover.style.cssText = `left:${x}px;top:${Math.max(8, Math.min(r.top + r.height / 2 - h / 2, innerHeight - h - 8))}px;width:${w}px;height:${h}px`;
   hover.firstElementChild.src = im.src;
   hover.hidden = false;
+}
+grid.addEventListener('mouseover', e => {
+  hovered = e.target.closest('.card');
+  if (hovered && e.shiftKey) showHover(hovered); else hideHover();
 });
-grid.addEventListener('mouseleave', hideHover);
-addEventListener('scroll', hideHover, { passive: true });
+grid.addEventListener('mouseleave', () => { hovered = null; hideHover(); });
+addEventListener('keydown', e => { if (e.key === 'Shift' && hovered) showHover(hovered); });
+addEventListener('keyup', e => { if (e.key === 'Shift') hideHover(); });
+addEventListener('blur', hideHover);
+addEventListener('scroll', () => { hideHover(); }, { passive: true });
 $('viewer').onclick = () => { $('viewer').hidden = true; };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('viewer').hidden = true; });
 

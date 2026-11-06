@@ -98,7 +98,7 @@ async function showImage(el) {
     urls.set(key, blob ? URL.createObjectURL(blob) : el.dataset.url);
   }
   const img = document.createElement('img');
-  img.alt = el.title;
+  img.alt = el.firstChild.textContent;
   img.src = urls.get(key);
   el.replaceChildren(img);
 }
@@ -126,7 +126,8 @@ function tile(c, face) {
   if (el) return el;
   el = document.createElement('div');
   el.dataset.oid = c.oracle_id;
-  el.title = c.name;
+  el.title = `${c.name}
+Hold Shift to view larger image`;
   el.dataset.img = img;
   el.dataset.url = url;
   el.innerHTML = `<span class="name"></span>`;
