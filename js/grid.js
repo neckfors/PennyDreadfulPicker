@@ -58,7 +58,8 @@ export function visible() {
   for (const c of cards) {
     if (state.selOnly && !sel.has(c.oracle_id)) continue;
     if (hits && !hits.has(c.oracle_id)) continue;
-    if (state.hideBanned && isBanned(banned, c)) continue;
+    const ban = isBanned(banned, c);
+    if (f.banned ? !ban : state.hideBanned && ban) continue;
     let face = 0;
     if (anyFilter) {
       const m = f.colors ? matchFace(c, f.colors) : -1;

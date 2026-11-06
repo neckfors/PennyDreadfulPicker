@@ -1,12 +1,19 @@
 // Banned list file parsing. Lands are never banned.
+
+// Reads a file as text, handling UTF-16 files (some deck exporters write those).
+export async function readText(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  if (buf[0] === 0xff && buf[1] === 0xfe) return new TextDecoder('utf-16le').decode(buf);
+  if (buf[0] === 0xfe && buf[1] === 0xff) return new TextDecoder('utf-16be').decode(buf);
+  return new TextDecoder('utf-8').decode(buf);
+}
+
+// Every row until the first row with no text. Any line ending works (Windows, Mac, Unix).
 export function parseList(text) {
   const names = [];
-  for (const raw of text.split(/\r?\n/)) {
+  for (const raw of text.replace(/^﻿/, '').split(/\r\n|\r|\n/)) {
     const line = raw.trim();
-    if (!line) {
-      if (names.length) break;  // first blank line ends the list (sideboard follows)
-      continue;
-    }
+    if (!line) break;
     names.push(line.replace(/^\d+x?\s+/i, ''));
   }
   return names;

@@ -10,7 +10,7 @@ export const state = {
   templates: {},
   selected: [],        // oracle ids
   banned: [],          // card names
-  filters: { colors: 0, multi: false, colorless: false, lands: false },
+  filters: { colors: 0, multi: false, colorless: false, lands: false, banned: false },
   sort: 'cmc',
   sortDesc: false,
   search: '',

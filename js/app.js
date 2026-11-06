@@ -3,7 +3,7 @@ import * as S from './state.js';
 import { state } from './state.js';
 import { classify, BIT } from './mana.js';
 import { search, slim, syncImages, yearClause } from './scryfall.js';
-import { parseList, applyList } from './banned.js';
+import { readText, parseList, applyList } from './banned.js';
 import { render, forgetImages, SORTS } from './grid.js';
 
 const $ = id => document.getElementById(id);
@@ -117,7 +117,7 @@ $('search').onkeydown = async e => {
 // ---- Filters ----
 const FILTER_BTNS = [
   ['W', 'ms-w', 'White'], ['U', 'ms-u', 'Blue'], ['G', 'ms-g', 'Green'], ['R', 'ms-r', 'Red'], ['B', 'ms-b', 'Black'],
-  ['multi', 'ms-multicolor', 'Multicolor'], ['colorless', 'ms-c', 'Colorless'], ['lands', 'ms-land', 'Lands'],
+  ['multi', 'ms-multicolor', 'Multicolor'], ['colorless', 'ms-c', 'Colorless'], ['lands', 'ms-land', 'Lands'], ['banned', null, 'Banned only'],
 ];
 function drawFilters() {
   $('colorBtns').innerHTML = '';
@@ -126,7 +126,8 @@ function drawFilters() {
     b.className = 'cbtn';
     b.title = label;
     b.setAttribute('aria-label', label);
-    b.innerHTML = BIT[key] ? `<i class="ms ${icon} ms-cost ms-shadow"></i>` : `<i class="ms ${icon}"></i>`;
+    b.innerHTML = BIT[key] ? `<i class="ms ${icon} ms-cost ms-shadow"></i>`
+      : icon ? `<i class="ms ${icon}"></i>` : '<span class="ban">⊘ Banned</span>';
     const isOn = () => (BIT[key] ? !!(state.filters.colors & BIT[key]) : state.filters[key]);
     const paint = () => { b.classList.toggle('on', isOn()); b.setAttribute('aria-pressed', isOn()); };
     b.onclick = () => {
@@ -171,12 +172,20 @@ $('bannedClear').onclick = () => {
   state.banned = []; notice(''); changed();
 };
 $('bannedFile').onchange = async () => {
-  const file = $('bannedFile').files[0];
+  const files = [...$('bannedFile').files];
   $('bannedFile').value = '';
-  if (!file) return;
-  const { list, lands } = applyList(parseList(await file.text()), S.cards, state.banned, bannedMode);
+  if (!files.length) return;
+  const names = [];
+  const perFile = [];
+  for (const f of files) {
+    const rows = parseList(await readText(f));
+    names.push(...rows);
+    perFile.push(`${f.name}: ${rows.length} rows`);
+  }
+  const before = bannedMode === 'add' ? state.banned.length : 0;
+  const { list, lands } = applyList(names, S.cards, state.banned, bannedMode);
   state.banned = list;
-  notice(`Banned list: ${list.length} cards.` +
+  notice(`Read ${perFile.join(', ')}. Banned list now ${list.length} cards (${list.length - before} new).` +
     (lands.length ? ` ${lands.length} land${lands.length > 1 ? 's' : ''} ignored: ${lands.join(', ')}.` : ''));
   changed();
 };

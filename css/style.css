@@ -51,3 +51,4 @@ label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
   transform: rotate(-8deg); pointer-events: none;
 }
 .empty { color: var(--muted); padding: 30px; }
+.cbtn .ban { font-size: 14px; }
