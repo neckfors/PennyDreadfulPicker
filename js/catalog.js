@@ -3,7 +3,7 @@
 import { search, slim } from './scryfall.js';
 
 // Bump when the printing choice changes: the next Fetch all then rebuilds the catalogue from scratch.
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 2;
 
 // Frame effects, promo-like sets and borders that make a printing hard to read.
 const WEIRD_EFFECTS = ['showcase', 'extendedart', 'inverted', 'shatteredglass', 'textless', 'etched', 'fullart', 'draft', 'companion', 'tombstone'];
@@ -11,8 +11,8 @@ const WEIRD_SETS = ['memorabilia', 'funny', 'token', 'minigame', 'promo', 'box',
 const hasImage = c => !!(c.image_uris || (c.card_faces || []).some(f => f.image_uris));
 const plain = c => hasImage(c) && c.border_color === 'black' && !c.full_art && !c.promo && !c.textless
   && !WEIRD_SETS.includes(c.set_type) && !(c.frame_effects || []).some(e => WEIRD_EFFECTS.includes(e));
-// Lower is better: plain printings first, then the oldest.
-const rank = c => `${plain(c) ? 0 : hasImage(c) ? 1 : 2} ${c.released_at}`;
+// Lower is better: plain printings first, then the newest (the date is flipped so newer sorts first).
+const rank = c => `${plain(c) ? 0 : hasImage(c) ? 1 : 2} ${99999999 - Number(c.released_at.replace(/-/g, ''))}`;
 
 // Reads a printing search into Map(oracle_id -> { card (slim original), key, prints }).
 export async function collect(q, onPage) {

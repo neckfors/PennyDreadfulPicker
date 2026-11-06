@@ -79,7 +79,7 @@ $('tplDelete').onclick = () => {
 // Fetch all: builds the catalogue of every PD card once, then only adds what is new.
 // Shift-click rebuilds the whole catalogue (new original printings overwrite the old ones).
 $('fetchAllBtn').onclick = async e => {
-  const rebuild = e.shiftKey || (state.catalogVersion !== null && state.catalogVersion < CATALOG_VERSION);
+  const rebuild = e.shiftKey || (S.allCards.length && state.catalogVersion !== CATALOG_VERSION);
   $('fetchAllBtn').disabled = $('fetchBtn').disabled = true;
   try {
     const today = new Date().toISOString().slice(0, 10);

@@ -7,14 +7,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const yearClause = years => '(' + years.map(y => `year:${y}`).join(' or ') + ')';
 
 // fetch() that waits and retries when Scryfall is rate limiting (HTTP 429, 5xx, or a blocked response
-// without CORS headers, which the browser reports as a network error). Backs off 2, 4, 8, 16 s.
+// without CORS headers, which the browser reports as a network error). Backs off 2, 4, 8, 16, 30, 30, 60 s.
 async function politeFetch(url, opts) {
   for (let tries = 0; ; tries++) {
     let res;
-    try { res = await fetch(url, opts); } catch (e) { if (tries >= 4) throw e; }
+    try { res = await fetch(url, opts); } catch (e) { if (tries >= 7) throw e; }
     if (res && res.status !== 429 && res.status < 500) return res;
-    if (tries >= 4) return res;
-    const wait = (res && Number(res.headers.get('Retry-After'))) || 2 ** (tries + 1);
+    if (tries >= 7) return res;
+    const wait = (res && Number(res.headers.get('Retry-After'))) || [2, 4, 8, 16, 30, 30, 60][tries];
     await sleep(wait * 1000);
   }
 }
@@ -34,7 +34,7 @@ export async function search(q, onPage, unique = 'cards', onBatch) {
     if (onBatch) onBatch(body.data); else out.push(...body.data);
     onPage && onPage(count, body.total_cards);
     url = body.has_more ? body.next_page : null;
-    if (url) await sleep(120);
+    if (url) await sleep(250);
   }
   return out;
 }
