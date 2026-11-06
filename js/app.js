@@ -14,6 +14,7 @@ const grid = $('grid');
 // Banned info shows while "Banned only" is on.
 const draw = () => {
   $('info').hidden = !state.filters.banned;
+  $('clearSel').textContent = state.selected.length ? `Clear selected (${state.selected.length})` : 'Clear selected';
   $('search').disabled = $('selOnly').disabled = state.filters.banned;
   const on = !!state.searchHits && !state.filters.banned;
   $('search').classList.toggle('active', on);
@@ -213,6 +214,34 @@ function drawFilters() {
 for (const [k, label] of Object.entries(SORTS)) $('sort').add(new Option(label, k));
 $('sort').onchange = () => { state.sort = $('sort').value; changed(); };
 $('sortDir').onclick = () => { state.sortDesc = !state.sortDesc; $('sortDir').textContent = state.sortDesc ? '↓' : '↑'; changed(); };
+// ---- Clear selected: confirmed by typing "clear" ----
+$('clearSel').onclick = () => {
+  if (!state.selected.length) return status('Nothing is selected.');
+  $('clearMsg').textContent = `Clear ${state.selected.length} selected cards?`;
+  $('clearInput').value = '';
+  $('clearOk').disabled = true;
+  $('clearDlg').showModal();
+  $('clearInput').focus();
+};
+$('clearInput').oninput = () => { $('clearOk').disabled = $('clearInput').value.trim().toLowerCase() !== 'clear'; };
+$('clearDlg').onclose = () => {
+  if ($('clearDlg').returnValue !== 'ok') return;
+  state.selected = [];
+  changed();
+};
+
+// ---- New version bar: checks on return to the app and every 30 minutes ----
+async function checkVersion() {
+  try {
+    const m = /'([^']+)'/.exec(await (await fetch(`js/version.js?${Date.now()}`, { cache: 'no-store' })).text());
+    if (m && m[1] !== VERSION) $('update').hidden = false;
+  } catch { /* offline: try again later */ }
+}
+$('updateBtn').onclick = () => location.reload();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
+setInterval(checkVersion, 30 * 60 * 1000);
+checkVersion();
+
 $('selOnly').onchange = () => { state.selOnly = $('selOnly').checked; changed(); };
 $('hideBanned').onchange = () => { state.hideBanned = $('hideBanned').checked; changed(); };
 $('size').oninput = () => {

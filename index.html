@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div id="update" role="status" hidden><span>New version available</span> <button id="updateBtn">Update</button></div>
 <header id="top">
   <div class="row" id="years"></div>
   <div class="row">
@@ -36,12 +37,21 @@
     <select id="sort" aria-label="Sort"></select>
     <button id="sortDir" title="Sort direction">↑</button>
     <label><input type="checkbox" id="selOnly"> Selected only</label>
+    <button id="clearSel">Clear selected</button>
     <label><input type="checkbox" id="hideBanned"> Hide banned</label>
     <label class="size">Size <input type="range" id="size" min="90" max="400" step="5"></label>
     <span id="counter"></span>
   </div>
 </header>
 <main id="grid"></main>
+<dialog id="clearDlg">
+  <form method="dialog">
+    <p id="clearMsg"></p>
+    <p class="hint">Type clear to confirm.</p>
+    <input id="clearInput" type="text" autocomplete="off" aria-label="Type clear to confirm">
+    <div class="actions"><button value="cancel">Cancel</button><button id="clearOk" value="ok" disabled>Clear selected</button></div>
+  </form>
+</dialog>
 <div id="viewer" hidden><img alt=""></div>
   <script type="module" src="js/app.js"></script>
 </body>

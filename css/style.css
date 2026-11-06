@@ -35,6 +35,14 @@ label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 #searchCount { position: absolute; right: 34px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
 #status { color: var(--muted); }
 #counter { margin-left: auto; color: var(--muted); }
+#update { display: flex; gap: 12px; align-items: center; justify-content: center; padding: 6px 12px; background: var(--accent); color: #0b0b0b; }
+#update[hidden] { display: none; }
+#update button { background: #0b0b0b; color: #fff; border-color: #0b0b0b; }
+#clearDlg { background: var(--panel, #1b1e24); color: inherit; border: 0.5px solid var(--muted); border-radius: 12px; padding: 14px 16px; max-width: 320px; }
+#clearDlg::backdrop { background: rgba(0, 0, 0, .5); }
+#clearDlg p { margin: 0 0 6px; } #clearDlg .hint { color: var(--muted); }
+#clearDlg input { width: 100%; box-sizing: border-box; margin: 4px 0 10px; }
+#clearDlg .actions { display: flex; gap: 8px; justify-content: flex-end; }
 #notice { color: var(--warn); padding: 2px 0; }
 #info { padding: 6px 0; }
 #info .summary { margin: 0 0 4px; color: var(--muted); }
