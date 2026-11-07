@@ -5,10 +5,10 @@ export const BIT = { W: 1, U: 2, B: 4, R: 8, G: 16 };
 
 const bitCount = m => COLORS.reduce((n, c) => n + (m & BIT[c] ? 1 : 0), 0);
 
-// One symbol -> list of colour masks it can be paid with.
+// One symbol -> list of colour masks it can be paid with. Phyrexian mana can also be paid with life (mask 0).
 function symbolAlternatives(sym) {
-  const parts = sym.split('/').filter(p => p !== 'P');
-  const alts = parts.map(p => BIT[p] || 0);
+  const parts = sym.split('/');
+  const alts = parts.map(p => (p === 'P' ? 0 : BIT[p] || 0));
   return [...new Set(alts)];
 }
 

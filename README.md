@@ -14,7 +14,7 @@
 - **Search** runs on Enter. While a search is active, the box turns blue and shows the number of matches. Emptying the box (or its ✕) removes the search at once. To refine a search, add to the text and press Enter.
 - **Shift-click Fetch all** throws away the stored catalogue and downloads everything again. You rarely need it.
 - The **version number** is at the end of the top bar. When a new version is online, a bar at the top says "New version available". Press **Update** to load it. Nothing reloads by itself.
-- **Colour buttons** show cards you can cast with only the selected colours. Hybrid and Phyrexian mana count either way. **Multicolor**, **Colorless** and **Lands** are separate filters. **Sort** has many keys, and the arrow flips the direction.
+- **Colour buttons** show cards you can cast with only the selected colours. Hybrid mana counts either way, and Phyrexian mana can be paid with life, so a card with `{R/P}{U/P}` shows under Red, Blue, Red and Blue together, and Colorless. **Multicolor**, **Colorless** and **Lands** are separate filters. **Sort** has many keys, and the arrow flips the direction.
 
 ## Search
 
